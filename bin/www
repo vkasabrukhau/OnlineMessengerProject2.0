@@ -1,0 +1,124 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+const {app, sessionMiddleware} = require('../app');
+var debug = require('debug')('nodejs-messaging-project2.0:server');
+var http = require('http');
+const config = require('../config');
+const mongoose = require('mongoose');
+const Message = require('../models/message')
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+const port = normalizePort(config.get('port'));
+app.set('port', port);
+
+/**
+ * Create HTTP server.
+ */
+
+const server = http.createServer(app);
+
+const io = require('socket.io')(server);
+
+io.on(function(socket, next){
+  sessionMiddleware(socket.request, socket.request.res, next);
+})
+
+savetoDB = function(userName, message){
+  let message = new Message({userName, message});
+  message.save(function(err, docs){
+    if(err) return console.error(err);
+      console.log(`message "${text}" from ${userName} successfully saved`);
+  })
+}
+
+io.on('connection', function(socket){
+  const user = socket.request.session.user;
+  console.log(`A user ${user.name} connected`);
+  socket.on('message', function(data){
+    console.log(`A user ${user.name} sent a message: ${data}`)
+    data = data.replace('<','').replace('>','');
+    savetoDB(user.name, data);
+    io.sockets.send({userName: user.name, text: data});
+  })
+})
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+mongoose.connect(config.get('database'), {useNewUrlParser: true, useUnifiedTopology: true}, function(err){
+  server.listen(port);
+  server.on('error', onError);
+  server.on('listening', onListening);
+})
+
+const db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function(){
+  console.log("we're connected!");
+});
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}

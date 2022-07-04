@@ -1,0 +1,8 @@
+node_modules/
+.idea/
+.vscode
+.DS_Store
+
+# Local Netlify folder
+.netlify
+lerna-debug.log

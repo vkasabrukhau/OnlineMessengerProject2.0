@@ -1,0 +1,13 @@
+<header>
+    <h1><%= title %></h1>
+    <a href="/">Home</a>
+    <a href="/about">About</a>
+    <% if (!user){ %>
+        <li><a href="/users/register">Register</a></li>
+        <li><a href="/users/authorization">Log in</a></li>
+    <% } else { %>
+        <li><a href="/users/logout">Log out</a></li>
+        <li><a href="#">Chat</a></li>
+        <li>You are <%= user.name %></li>
+    <% } %>
+</header>

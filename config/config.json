@@ -1,0 +1,5 @@
+{
+    "port": 3000,
+    "log_format": "Date of request - :date[web] | Method - :method | URL - :url | Status - :status",
+    "database": "mongodb://localhost/webchatdb"
+}
